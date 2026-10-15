@@ -1,7 +1,7 @@
 # Project DBA
 ## Thermostat
-Client : (cyclic)
-Env : 
-Actions : 
-- on / off
-Policy : 
+1. Client : (cyclicBehaviour?)
+2. Env : 
+3. Actions : 
+    - on / off
+4. Policy : 
