@@ -4,12 +4,12 @@ import com.google.gson.JsonObject;
 import dba_practicas.thermostat.environment.DBAClient;
 import dba_practicas.thermostat.policy.ThermoPolicy;
 import jade.core.Agent;
+import java.io.FileInputStream;
+import java.util.Properties;
 
 public class ThermoAgent extends Agent {
 
-    // Connection settings
-    private static final String DBA_LAB_URL = "http://orca.ugr.es:8080";
-    private static final String DBA_TOKEN = "xxx";
+    // Challenge to solve
     private static final String CHALLENGE_TYPE = "THERMOSTAT";
 
     // Link with the environment
@@ -24,8 +24,13 @@ public class ThermoAgent extends Agent {
 
     @Override
     protected void setup() {
-        client = new DBAClient(DBA_LAB_URL, DBA_TOKEN);
         try {
+            // Loading the secrets from the .env file
+            Properties env = new Properties();
+            env.load(new FileInputStream(".env"));
+            client = new DBAClient(env.getProperty("DBA_LAB_URL"),
+                                   env.getProperty("DBA_TOKEN"));
+
             // Finding the challenge and starting the run
             long challengeId = client.findChallengeId(CHALLENGE_TYPE);
             runId = client.startRun(challengeId);

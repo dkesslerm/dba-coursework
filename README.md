@@ -17,15 +17,17 @@ The library paths are specific to each computer, so you must add them yourself:
 - If NetBeans shows broken references, remove them first (right-click → **Remove**).
 
 ### 4. Add your own token
-In `ThermoAgent.java`, replace `"XXXX"` with **your personal DBA Lab token**:
-```java
-private static final String DBA_TOKEN = "XXXX";
+1. At the root of the project, **copy `EXAMPLE.env` and rename the copy to `.env`**.
+2. In `.env`, replace `XXXX` with **your personal DBA Lab token**:
 ```
-⚠️ **Each member uses their own token. Never commit or share it.** Put `"XXXX"` back before every commit.
+DBA_LAB_URL=http://orca.ugr.es:8080
+DBA_TOKEN=XXXX
+```
+⚠️ **Each member uses their own token. Never share it.** The `.env` file is in `.gitignore`, so it is never committed. Don't put your token in `EXAMPLE.env`.
 
 ### 5. Build and run
 1. In NetBeans: **Clean and Build** (check for `BUILD SUCCESSFUL`).
-2. From the project folder, run (adapt the paths to your computer):
+2. **From the project folder** (where `.env` is), run (adapt the paths to your computer):
 ```powershell
 java -cp "C:\path\to\jade.jar;C:\path\to\gson-2.11.0.jar;dist\dba-coursework-git.jar" jade.Boot -local-host localhost -port 1200 -agents thermo:dba_practicas.thermostat.agents.ThermoAgent
 ```
@@ -34,4 +36,5 @@ java -cp "C:\path\to\jade.jar;C:\path\to\gson-2.11.0.jar;dist\dba-coursework-git
 - **Only one active run per student.** If a run stays open, you'll get an HTTP `409` error until it expires (5 minutes).
 - **`Cannot bind ... port`**: another JADE is still running. Close it, or change `-port`.
 - **`Class ... not found`**: check the package names and do a **Clean and Build**.
+- **`FileNotFoundException: .env`**: the `.env` file is missing, or you didn't run the command from the project folder.
 - **Connection error**: check the VPN.
