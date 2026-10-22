@@ -1,5 +1,6 @@
 package dba_practicas.thermostat.agents;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import jade.core.behaviours.Behaviour;
 
@@ -22,8 +23,9 @@ public class ThermostatBehaviour extends Behaviour {
 
             String status = control.get("runStatus").getAsString();
             if (!status.equals("ACTIVE")) {
-                System.out.println("End of run : " + status
-                        + " (reason : " + control.get("reasonCode") + ")");
+                JsonElement reason = control.get("reasonCode");
+                System.out.println("End of run : " + status + " (reason : "
+                        + (reason == null || reason.isJsonNull() ? "-" : reason.getAsString()) + ")");
                 finished = true;
                 agent.doDelete();
             }
