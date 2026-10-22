@@ -1,40 +1,70 @@
-## Setup (for group members)
+# DBA Coursework — Practice 2
+
+JADE agents that interact with **DBA Lab** (UGR) to solve the Practice 2 challenges:
+
+- **Thermostat**: keep a refrigerated chamber within its permitted temperature interval until the lab reports the run as finished.
+- **Grid**: 2D navigation towards a target, avoiding obstacles and managing energy. *(in progress)*
+
+## Project structure
+
+```
+src/dba_practicas/
+├── common/
+│   └── DBAClient.java              # DBA Lab REST API client, shared by every challenge
+└── thermostat/
+    ├── agents/
+    │   ├── ThermoAgent.java        # Agent: setup, sensors (see), actuators (execute)
+    │   └── ThermostatBehaviour.java  # Perception → decision → action cycle
+    └── policy/
+        └── ThermoPolicy.java       # Decision rule (refrigeration on / off)
+```
+
+The responsibilities are split so that the parts can be reused for Grid:
+`DBAClient` only knows the API, the agent only knows its sensors and actuators, the behaviour only runs the cycle, and the policy only decides.
+
+## Setup
 
 ### 1. Requirements
-- **Java 11 or later** (the project uses JDK 25)
-- **NetBeans**
+- **JDK 21 or later**
+- **NetBeans** (or Ant)
 - **JADE 4.6.0** (`jade.jar`)
-- **Gson 2.11.0**: [download gson-2.11.0.jar](https://repo1.maven.org/maven2/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar)
+- **Gson 2.11.0**: [gson-2.11.0.jar](https://repo1.maven.org/maven2/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar)
 - Connection to the **UGR network or the UGR VPN** (required to reach DBA Lab)
 
 ### 2. Get the project
 1. Clone the repository.
-2. In NetBeans: **File → Open Project** → select the `dba-coursework-git` folder.
+2. Copy `jade.jar` and `gson-2.11.0.jar` into the `lib/` folder (with exactly those names). The jars are gitignored; the project already points to them, so there is no need to add libraries in NetBeans.
+3. In NetBeans: **File → Open Project** → select the repository folder.
 
-### 3. Add the libraries
-The library paths are specific to each computer, so you must add them yourself:
-- Right-click **Libraries → Add JAR/Folder** → add `jade.jar` and `gson-2.11.0.jar`.
-- If NetBeans shows broken references, remove them first (right-click → **Remove**).
+### 3. Add your own token
+1. At the root of the project, copy `.env.example` to `.env`.
+2. Fill in the lab URL and **your personal DBA Lab token**:
+   ```
+   DBA_LAB_URL=http://orca.ugr.es:8080
+   DBA_TOKEN=your-token-here
+   ```
 
-### 4. Add your own token
-1. At the root of the project, **copy `EXAMPLE.env` and rename the copy to `.env`**.
-2. In `.env`, replace `XXXX` with **your personal DBA Lab token**:
-```
-DBA_LAB_URL=http://orca.ugr.es:8080
-DBA_TOKEN=XXXX
-```
-⚠️ **Each member uses their own token. Never share it.** The `.env` file is in `.gitignore`, so it is never committed. Don't put your token in `EXAMPLE.env`.
+> ⚠️ **Each member uses their own token. Never share or commit it.** `.env` is gitignored; never put a real token in `.env.example` or in the code.
 
-### 5. Build and run
-1. In NetBeans: **Clean and Build** (check for `BUILD SUCCESSFUL`).
-2. **From the project folder** (where `.env` is), run (adapt the paths to your computer):
-```powershell
-java -cp "C:\path\to\jade.jar;C:\path\to\gson-2.11.0.jar;dist\dba-coursework-git.jar" jade.Boot -local-host localhost -port 1200 -agents thermo:dba_practicas.thermostat.agents.ThermoAgent
-```
+### 4. Build and run
+1. **Clean and Build** in NetBeans (or `ant clean jar`) and check for `BUILD SUCCESSFUL`.
+2. From the project root (where `.env` is):
 
-### 6. Good to know
-- **Only one active run per student.** If a run stays open, you'll get an HTTP `409` error until it expires (5 minutes).
-- **`Cannot bind ... port`**: another JADE is still running. Close it, or change `-port`.
+   Linux / macOS:
+   ```bash
+   java -cp "lib/jade.jar:lib/gson-2.11.0.jar:dist/dba-coursework-git.jar" jade.Boot \
+        -local-host localhost -port 1200 \
+        -agents thermo:dba_practicas.thermostat.agents.ThermoAgent
+   ```
+
+   Windows (PowerShell):
+   ```powershell
+   java -cp "lib\jade.jar;lib\gson-2.11.0.jar;dist\dba-coursework-git.jar" jade.Boot -local-host localhost -port 1200 -agents thermo:dba_practicas.thermostat.agents.ThermoAgent
+   ```
+
+## Troubleshooting
+- **HTTP `409`**: only one active run per student. The agent closes its run when it stops; if a run was left open anyway (e.g. the process was killed), it expires 5 minutes after the last applied action.
+- **`Cannot bind ... port`**: another JADE platform is still running. Close it, or change `-port`.
 - **`Class ... not found`**: check the package names and do a **Clean and Build**.
-- **`FileNotFoundException: .env`**: the `.env` file is missing, or you didn't run the command from the project folder.
+- **`FileNotFoundException: .env`**: the `.env` file is missing, or the command was not run from the project root.
 - **Connection error**: check the VPN.
