@@ -36,8 +36,7 @@ public class ThermoAgent extends Agent {
             env.load(new FileInputStream(".env"));
             
             // Connecting to the environment
-            client = new DBAClient(env.getProperty("DBA_LAB_URL"),
-                                   env.getProperty("DBA_TOKEN"));
+            client = new DBAClient(env.getProperty("DBA_LAB_URL"),env.getProperty("DBA_TOKEN"));
 
             // Finding challenge and starting the run
             long challengeId = client.findChallengeId(CHALLENGE_TYPE);
@@ -63,8 +62,7 @@ public class ThermoAgent extends Agent {
 
     // Sensors: read the current temperature
     void see() throws Exception {
-        temperature = client.readSensor(runId, "thermostat.temperature")
-                .get("celsius").getAsDouble();
+        temperature = client.readSensor(runId, "thermostat.temperature").get("celsius").getAsDouble();
     }
 
     // Decision: delegated to the policy
@@ -75,8 +73,8 @@ public class ThermoAgent extends Agent {
     // Actuators: send the action, return the control part
     JsonObject execute(String action) throws Exception {
         JsonObject control = client.sendAction(runId, action);
-        System.out.println("temp " + temperature + " -> "
-                + (action.equals(ThermoPolicy.ACTION_ON) ? "ON " : "OFF")
+        System.out.println("temp " + temperature + " -> " 
+                + (action.equals(ThermoPolicy.ACTION_ON) ? "ON " : "OFF") 
                 + " | " + control.get("runStatus").getAsString());
         return control;
     }
