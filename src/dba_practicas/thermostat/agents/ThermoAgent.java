@@ -2,66 +2,69 @@ package dba_practicas.thermostat.agents;
 
 import com.google.gson.JsonObject;
 import dba_practicas.thermostat.environment.DBAClient;
+import dba_practicas.thermostat.policy.ThermoPolicy;
 import jade.core.Agent;
 
 public class ThermoAgent extends Agent {
 
-    // Connection settings to DBA Lab
-    private DBAClient client;
+    // Connection settings
     private static final String DBA_LAB_URL = "http://orca.ugr.es:8080";
-    private static final String DBA_TOKEN = "Hp23rTuDqozv25v17d7FrbMmW2L9GaSYR50b5FAzaek";
+    private static final String DBA_TOKEN = "xxx";
     private static final String CHALLENGE_TYPE = "THERMOSTAT";
 
-    // Internal state (used by the behaviour)
-    double lower, upper, target, temperature;
-    boolean isFinished = false;
+    // Link with the environment
+    private DBAClient client;
+    private String runId;
+
+    // Decision strategy
+    private ThermoPolicy policy;
+
+    // Internal state
+    private double temperature;
 
     @Override
     protected void setup() {
         client = new DBAClient(DBA_LAB_URL, DBA_TOKEN);
-
         try {
-            // Getting the challenge id (depending on the type)
+            // Finding the challenge and starting the run
             long challengeId = client.findChallengeId(CHALLENGE_TYPE);
-            System.out.println(CHALLENGE_TYPE + " id: " + challengeId);
+            runId = client.startRun(challengeId);
 
-            // Starting the run
-            String runId = client.startRun(challengeId);
-            System.out.println("Running : runId = " + runId);
-
-            // Reading the sensors (no "double": we fill the fields)
+            // Reading the fixed information once
             JsonObject limits = client.readSensor(runId, "thermostat.limits");
-            lower = limits.get("lower").getAsDouble();
-            upper = limits.get("upper").getAsDouble();
-            target = client.readSensor(runId, "thermostat.target").get("celsius").getAsDouble();
-            temperature = client.readSensor(runId, "thermostat.temperature").get("celsius").getAsDouble();
+            double lower = limits.get("lower").getAsDouble();
+            double upper = limits.get("upper").getAsDouble();
+            double target = client.readSensor(runId, "thermostat.target").get("celsius").getAsDouble();
+            System.out.println("Run " + runId + " | limits [" + lower + ", " + upper + "] | target " + target);
 
-            System.out.println("Limits : [" + lower + ", " + upper + "]");
-            System.out.println("Target : " + target);
-            System.out.println("Temperature : " + temperature);
+            // Creating the policy with this information
+            policy = new ThermoPolicy(lower, upper, target);
 
-            // Testing one action ON
-            String status = client.sendAction(runId, "thermostat.refrigeration.on")
-                    .get("runStatus").getAsString();
-            temperature = client.readSensor(runId, "thermostat.temperature").get("celsius").getAsDouble();
-            System.out.println("After ON : " + temperature + " (" + status + ")");
-
-            // Testing one action OFF
-            if (status.equals("ACTIVE")) {
-                status = client.sendAction(runId, "thermostat.refrigeration.off")
-                        .get("runStatus").getAsString();
-                temperature = client.readSensor(runId, "thermostat.temperature").get("celsius").getAsDouble();
-                System.out.println("After OFF : " + temperature + " (" + status + ")");
-            }
-
-            // Closing only if the run is still active
-            if (status.equals("ACTIVE")) {
-                client.closeRun(runId);
-                System.out.println("Run closed !");
-            }
         } catch (Exception e) {
-            System.out.println("Error : " + e.getMessage());
+            System.out.println("Setup error : " + e.getMessage());
             doDelete();
+            return;
         }
+        addBehaviour(new ThermostatBehaviour(this));
+    }
+
+    // Sensors: read the current temperature
+    void see() throws Exception {
+        temperature = client.readSensor(runId, "thermostat.temperature")
+                .get("celsius").getAsDouble();
+    }
+
+    // Decision: delegated to the policy
+    String decide() {
+        return policy.decide(temperature);
+    }
+
+    // Actuators: send the action, return the control part
+    JsonObject execute(String action) throws Exception {
+        JsonObject control = client.sendAction(runId, action);
+        System.out.println("temp " + temperature + " -> "
+                + (action.equals(ThermoPolicy.ACTION_ON) ? "ON " : "OFF")
+                + " | " + control.get("runStatus").getAsString());
+        return control;
     }
 }
