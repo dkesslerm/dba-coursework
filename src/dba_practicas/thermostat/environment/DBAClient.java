@@ -9,6 +9,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class DBAClient {
+    /*
+    * This class is the one who acts with the environment using the API
+    */
 
     private final HttpClient http;
     private final String api;
