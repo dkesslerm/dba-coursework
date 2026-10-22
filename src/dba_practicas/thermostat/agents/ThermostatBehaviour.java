@@ -4,7 +4,9 @@ import com.google.gson.JsonObject;
 import jade.core.behaviours.Behaviour;
 
 public class ThermostatBehaviour extends Behaviour {
-
+    /*
+    This class es executed in lap, the cycle does perciving, deciding and acting
+    */
     private final ThermoAgent agent;
     private boolean finished = false;
 
@@ -20,6 +22,7 @@ public class ThermostatBehaviour extends Behaviour {
             String action = agent.decide();            // Rules
             JsonObject control = agent.execute(action); // Actuators
 
+            // Waiting for the response (ACTIVE, SUCCEEDED, FAILED)
             String status = control.get("runStatus").getAsString();
             if (!status.equals("ACTIVE")) {
                 System.out.println("End of run : " + status
