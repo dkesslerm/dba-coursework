@@ -1,4 +1,4 @@
-package dba_practicas.Thermostat.Environnement;
+package dba_practicas.thermostat.environment;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
