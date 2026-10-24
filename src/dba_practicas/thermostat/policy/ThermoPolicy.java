@@ -1,6 +1,10 @@
 package dba_practicas.thermostat.policy;
 
 public class ThermoPolicy {
+    /*
+    Logic of how the agent thinks: what to do when
+    the temperature is too high
+    */
 
     // Action codes
     public static final String ACTION_ON = "thermostat.refrigeration.on";

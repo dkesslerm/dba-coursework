@@ -8,45 +8,52 @@ import java.io.FileInputStream;
 import java.util.Properties;
 
 public class ThermoAgent extends Agent {
+    /*
+        This is the agent of our project. It sees the environment through its sensors (using the API),
+        decides with its policy (strategy) and acts through its actuators.
+    */
 
-    // Challenge to solve
+    // Challenge type
     private static final String CHALLENGE_TYPE = "THERMOSTAT";
 
-    // Link with the environment
+    // Link to the environment
     private DBAClient client;
     private String runId;
     private boolean runActive = false;
 
-    // Decision strategy
+    // Policies (decisions)
     private ThermoPolicy policy;
 
-    // Internal state
+    // State
     private double temperature;
 
     @Override
     protected void setup() {
+        // Sets up the connection and reads all the needed information, runs only once
         try {
-            // Loading the secrets from the .env file
+            // Loading secrets
             Properties env = new Properties();
             try (FileInputStream in = new FileInputStream(".env")) {
                 env.load(in);
             }
+
+            // Connecting to the environment
             client = new DBAClient(env.getProperty("DBA_LAB_URL"),
                                    env.getProperty("DBA_TOKEN"));
 
-            // Finding the challenge and starting the run
+            // Finding challenge and starting the run
             long challengeId = client.findChallengeId(CHALLENGE_TYPE);
             runId = client.startRun(challengeId);
             runActive = true;
 
-            // Reading the fixed information once
+            // Reading the fixed information
             JsonObject limits = client.readSensor(runId, "thermostat.limits");
             double lower = limits.get("lower").getAsDouble();
             double upper = limits.get("upper").getAsDouble();
             double target = client.readSensor(runId, "thermostat.target").get("celsius").getAsDouble();
             System.out.println("Run " + runId + " | limits [" + lower + ", " + upper + "] | target " + target);
 
-            // Creating the policy with this information
+            // Creating the policy
             policy = new ThermoPolicy(lower, upper, target);
 
         } catch (Exception e) {
@@ -59,8 +66,7 @@ public class ThermoAgent extends Agent {
 
     // Sensors: read the current temperature
     void see() throws Exception {
-        temperature = client.readSensor(runId, "thermostat.temperature")
-                .get("celsius").getAsDouble();
+        temperature = client.readSensor(runId, "thermostat.temperature").get("celsius").getAsDouble();
     }
 
     // Decision: delegated to the policy
