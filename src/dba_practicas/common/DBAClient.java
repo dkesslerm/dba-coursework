@@ -1,4 +1,4 @@
-package dba_practicas.thermostat.environment;
+package dba_practicas.common;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,7 +19,7 @@ public class DBAClient {
         this.api = baseUrl + "/api/v1";
         this.token = token;
     }
-    
+
     // Sends a GET request
     private String get(String path) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
@@ -46,8 +46,7 @@ public class DBAClient {
 
     // Sends the request and checks the HTTP status
     private String send(HttpRequest request) throws Exception {
-        HttpResponse<String> response =
-                http.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();
         if (status < 200 || status >= 300) {
             throw new Exception("HTTP error " + status + " : " + response.body());
@@ -55,7 +54,7 @@ public class DBAClient {
         return response.body();
     }
 
-    // Challenges 
+    // ===== Challenges =====
 
     // Getting all the challenges available
     public String getChallenges() throws Exception {
@@ -66,7 +65,7 @@ public class DBAClient {
     public long findChallengeId(String environmentType) throws Exception {
         String json = getChallenges();
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-        
+
         for (JsonElement element : root.getAsJsonArray("challenges")) {
             JsonObject challenge = element.getAsJsonObject();
             if (challenge.get("environmentType").getAsString().equals(environmentType)) {
@@ -76,11 +75,13 @@ public class DBAClient {
         throw new Exception("No challenge of type " + environmentType);
     }
 
-    // Runs
+    // ===== Runs =====
+
     // Starting a run and returning its runId
     public String startRun(long challengeId) throws Exception {
-        String body = "{\"challengeId\":" + challengeId + "}";
-        String json = post("/runs", body);
+        JsonObject body = new JsonObject();
+        body.addProperty("challengeId", challengeId);
+        String json = post("/runs", body.toString());
         System.out.println("Start response : " + json);
 
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
@@ -91,9 +92,10 @@ public class DBAClient {
     public void closeRun(String runId) throws Exception {
         post("/runs/" + runId + "/close", null);
     }
+
     // ===== Perceptions =====
 
-    // Reading one sensor and returning it's value
+    // Reading one sensor and returning its value
     public JsonObject readSensor(String runId, String sensorId) throws Exception {
         String json = post("/runs/" + runId + "/perceptions/" + sensorId, null);
         System.out.println("Sensor " + sensorId + " : " + json);
@@ -101,13 +103,14 @@ public class DBAClient {
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         return root.getAsJsonObject("value");
     }
-    
+
     // ===== Actions =====
 
     // Sending an action and returning the control part of the response
     public JsonObject sendAction(String runId, String actionCode) throws Exception {
-        String body = "{\"actionCode\":\"" + actionCode + "\"}";
-        String json = post("/runs/" + runId + "/actions", body);
+        JsonObject body = new JsonObject();
+        body.addProperty("actionCode", actionCode);
+        String json = post("/runs/" + runId + "/actions", body.toString());
 
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         if (!root.get("actionStatus").getAsString().equals("APPLIED")) {
