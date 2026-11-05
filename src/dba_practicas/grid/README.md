@@ -1,6 +1,5 @@
-### 1. Environment
-I took over all the functionalities that we put onto the agent last time.
-The method names are the same ones from last time.
+### 1. GridEnvironment
+Owns the connection and the run, and exposes the sensors (`readPosition`, `readBumpers`, `readEnergy`) and the actuator (`sendAction`), the same way `ThermoEnvironment` does.
 ### 2. Position:
 is a record to save the x and y coordinates in the entire program.
 ### 3. CellState
@@ -17,5 +16,5 @@ with the grid setup with CellState. I left it in case you want it, and some bits
 ### 6. GridPolicy
 I didn't do anything here.
 
-### 7. GridBehaviour
-I stripped it down to its basics and moved all the functionality to the environment.
+### 7. GridAgent and GridBehaviour
+The agent creates the environment and the policy, and closes the run when it ends. The behaviour runs the see → decide → execute cycle. `see` is still a TODO.

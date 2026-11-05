@@ -5,7 +5,7 @@ JADE agents that interact with **DBA Lab** (UGR) to solve the Practice 2 challen
 | Part | Goal | Status |
 | --- | --- | --- |
 | **Thermostat** | Keep a refrigerated chamber within its permitted temperature interval until DBA Lab reports the run as finished. | In development |
-| **Grid** | Reach a target in a 2D grid using cardinal moves, avoiding obstacles, with partial perception and limited energy. | Not started |
+| **Grid** | Reach a target in a 2D grid using cardinal moves, avoiding obstacles, with partial perception and limited energy. | In development |
 
 ## How it works
 
@@ -23,6 +23,18 @@ The cycle stops when DBA Lab reports that the run is no longer `ACTIVE`. The off
 src/dba_practicas/
 ├── common/
 │   └── DBAClient.java                # DBA Lab REST API client, shared by every challenge
+├── grid/
+│   ├── README.md                     # Notes on the grid classes and open design questions
+│   ├── agents/
+│   │   ├── GridAgent.java            # Agent: setup, wires environment and policy, run closing
+│   │   └── GridBehaviour.java        # Perception → decision → action cycle
+│   ├── environment/
+│   │   ├── GridEnvironment.java      # The run: connection, sensors, actuators, known grid
+│   │   ├── Position.java             # x and y coordinates
+│   │   ├── Bumpers.java              # Which adjacent cells are blocked
+│   │   └── CellState.java            # State of a cell in the known grid
+│   └── policy/
+│       └── GridPolicy.java           # Decision rule (not implemented yet)
 └── thermostat/
     ├── agents/
     │   ├── ThermoAgent.java          # Agent: setup, wires environment and policy, run closing

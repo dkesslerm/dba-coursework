@@ -1,4 +1,4 @@
-package grid;
+package dba_practicas.grid.environment;
 
 public enum CellState {
     // TODO

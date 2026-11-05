@@ -1,4 +1,4 @@
-package grid;
+package dba_practicas.grid.policy;
 
 public class GridPolicy {
     /**

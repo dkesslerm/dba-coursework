@@ -1,4 +1,4 @@
-package grid;
+package dba_practicas.grid.environment;
 
 public class Bumpers {
     /**
@@ -11,9 +11,9 @@ public class Bumpers {
     private boolean south;
     private boolean west;
 
-    public Bumpers(boolean east, boolean north, boolean south, boolean west) {
-        this.east = east;
+    public Bumpers(boolean north, boolean east, boolean south, boolean west) {
         this.north = north;
+        this.east = east;
         this.south = south;
         this.west = west;
     }
