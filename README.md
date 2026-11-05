@@ -25,8 +25,10 @@ src/dba_practicas/
 │   └── DBAClient.java                # DBA Lab REST API client, shared by every challenge
 └── thermostat/
     ├── agents/
-    │   ├── ThermoAgent.java          # Agent: setup, sensors (see), actuators (execute), run closing
+    │   ├── ThermoAgent.java          # Agent: setup, wires environment and policy, run closing
     │   └── ThermostatBehaviour.java  # Perception → decision → action cycle
+    ├── environment/
+    │   └── ThermoEnvironment.java    # The run: connection, sensors, actuators
     └── policy/
         └── ThermoPolicy.java         # Decision rule (refrigeration on / off)
 lib/                                  # jade.jar and gson-2.11.0.jar (not committed, see Setup)
@@ -34,7 +36,7 @@ nbproject/, build.xml, manifest.mf    # NetBeans / Ant project files
 .env.example                          # Template for your personal .env
 ```
 
-Each class has one responsibility so the parts can be reused for Grid: `DBAClient` only knows the API, the agent only knows its sensors and actuators, the behaviour only runs the cycle, and the policy only decides.
+Each class has one responsibility so the parts can be reused for Grid: `DBAClient` only knows the API, the environment only knows the run with its sensors and actuators, the agent only wires the parts together and closes the run, the behaviour only runs the cycle, and the policy only decides.
 
 ## Setup
 
