@@ -44,15 +44,17 @@ public class GridBehaviour extends Behaviour {
         }
     }
 
-    //TODO
-    //didnt write see bc would change completely if Bumpers used or not
-    private void see() {
-        
+    // Sensors: the action response does not include the new position or energy,
+    // so they are read again at every step. Position first: the bumpers depend on it
+    private void see() throws Exception {
+        env.readPosition();
+        env.readBumpers();
+        env.readEnergy();
     }
 
     // Decision: delegated to the policy
     private String decide() {
-        return policy.decide();
+        return policy.decide(env.getCurrentPosition(), env.getTarget(), env.getGrid());
     }
 
     // Actuators: send the action, return the control part
@@ -66,7 +68,8 @@ public class GridBehaviour extends Behaviour {
             case GridPolicy.ACTION_WEST -> "WEST";
             default -> "unknown: " + action;
         };
-        System.out.println("Position: " + env.getCurrentPosition() + " -> " + direction
+        System.out.println("Position: " + env.getCurrentPosition()
+                + " | energy " + env.getRemainingEnergy() + " -> " + direction
                 + " | " + control.get("runStatus").getAsString());
         return control;
     }

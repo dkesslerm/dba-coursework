@@ -23,8 +23,8 @@ public class GridEnvironment {
     // State
     private Position currentPosition;
     private Position targetPos;
-    private Bumpers bumpers;
-    private final Map<Position, CellState> grid = new HashMap<>();
+    // Known map: every cell the bumpers have reported. 1 is blocked, 0 is open
+    private final Map<Position, Boolean> grid = new HashMap<>();
 
     // print in the beginning and then remainingEnergy after each move
     private String energyMode;
@@ -40,7 +40,12 @@ public class GridEnvironment {
                                secrets.getProperty("DBA_TOKEN"));
     }
 
-    // Starts the run and reads the initial information, runs only once.
+    public GridEnvironment(DBAClient client) {
+        this.client = client;
+    }
+
+    // Starts the run and reads the target, runs only once. The position, bumpers and
+    // energy change at every step, so the behaviour reads them in each cycle (see).
     // Separated from the constructor so that the agent already holds this object
     // and can close the run if one of the readings fails
     public void start() throws Exception {
@@ -48,24 +53,9 @@ public class GridEnvironment {
         runId = client.startRun(challengeId);
         runActive = true;
 
-        readPosition();
-        System.out.println("Run " + runId + " | Current Position " + currentPosition.x() + ", " + currentPosition.y());
-
         JsonObject tPosition = client.readSensor(runId, "grid.target");
         targetPos = new Position(tPosition.get("x").getAsInt(), tPosition.get("y").getAsInt());
-        System.out.println(" | Target Position [" + targetPos.x() + ", " + targetPos.y() + "] "); 
-
-        // TODO do i need the bumper class? could also just save current vision in grid and work with that? maybe bumper makes it easier for policy later?
-        readBumpers();
-
-        // add new INFO to grid depends on if we use bumpers or not
-        //grid.put()
-
-        grid.put(currentPosition, CellState.VISITED);
-        grid.put(targetPos, CellState.TARGET);
-
-        readEnergy();
-        System.out.println(" | Energy Mode: " + energyMode + " | Energy Remaining: " + remainingEnergy);
+        System.out.println("Run " + runId + " | Target Position " + targetPos);
     }
 
     public Position getCurrentPosition() {
@@ -76,11 +66,7 @@ public class GridEnvironment {
         return targetPos;
     }
 
-    public Bumpers getBumpers() {
-        return bumpers;
-    }
-
-    public Map<Position, CellState> getGrid() {
+    public Map<Position, Boolean> getGrid() {
         return grid;
     }
 
@@ -102,13 +88,15 @@ public class GridEnvironment {
         currentPosition = new Position(position.get("x").getAsInt(), position.get("y").getAsInt());
     }
 
-    // Sensor: reads which adjacent cells are blocked
+    // Sensor: reads which adjacent cells are blocked and writes them into the known map.
+    // Uses the current position, so readPosition() must be called first.
+    // y counts from the top, so north is y - 1
     public void readBumpers() throws Exception {
         JsonObject bumper = client.readSensor(runId, "grid.bumpers");
-        bumpers = new Bumpers(bumper.get("north").getAsBoolean(),
-                bumper.get("east").getAsBoolean(),
-                bumper.get("south").getAsBoolean(),
-                bumper.get("west").getAsBoolean());
+        grid.put(currentPosition.move(0, -1), bumper.get("north").getAsBoolean());
+        grid.put(currentPosition.move(1, 0), bumper.get("east").getAsBoolean());
+        grid.put(currentPosition.move(0, 1), bumper.get("south").getAsBoolean());
+        grid.put(currentPosition.move(-1, 0), bumper.get("west").getAsBoolean());
     }
 
     // Sensor: reads the energy mode and the remaining energy
