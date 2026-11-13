@@ -1,13 +1,8 @@
 package dba_practicas.grid.policy;
 
 import dba_practicas.grid.environment.Position;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
+
+import java.util.*;
 
 public class GridPolicy {
     /*
@@ -16,7 +11,6 @@ public class GridPolicy {
     The agent replans at every step and only takes the first move of the path,
     so the path changes as the bumpers reveal new obstacles.
     */
-
     // Action codes
     public static final String ACTION_NORTH = "grid.move.north";
     public static final String ACTION_EAST = "grid.move.east";
@@ -27,47 +21,54 @@ public class GridPolicy {
     // Returns the action code of the first move of the shortest path known so far
     public String decide(Position current, Position target, Map<Position, Boolean> known) {
         if (current.equals(target)) {
-            throw new IllegalStateException("Already at the target " + target);
+            throw new RuntimeException(current + " equals " + target + " already!");
         }
-
-        // Open: nodes waiting to be expanded, lowest f first (ties: closest to the target)
-        PriorityQueue<Node> open = new PriorityQueue<>(
-                Comparator.comparingInt(Node::f).thenComparingInt(Node::h));
-        // Closed: positions already expanded in this search
+        PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingInt(Node::f).thenComparingInt(Node::g));
+        Node currentAstarNode = new Node(current, 0, manhattan(current, target), null);
         Set<Position> closed = new HashSet<>();
 
-        open.add(new Node(current, 0, manhattan(current, target), null));
+        while (!currentAstarNode.position().equals(target)) {
+            //add the current position to closed/visited nodes
+            closed.add(currentAstarNode.position());
 
-        while (!open.isEmpty()) {
-            Node node = open.poll();
-            if (node.position().equals(target)) {
-                return firstAction(node);
-            }
-            // A position can be in open several times with different g: only the first one counts
-            if (!closed.add(node.position())) {
-                continue;
+            //get all neighbours of current node
+            List<Position> neighbours = getNeighbours(currentAstarNode.position(), known);
+
+            //add all of the neighbours into the Priorityqueue
+            for (Position p : neighbours) {
+                if (closed.contains(p)) continue;
+                open.add(new Node(p, currentAstarNode.g() + 1, manhattan(p, target), currentAstarNode));
+
             }
 
-            for (Position next : neighbours(node.position())) {
-                if (known.getOrDefault(next, false) || closed.contains(next)) { 
-                    continue;
-                }  
-                open.add(new Node(next, node.g() + 1, manhattan(next, target), node));
+            //pop first, make it current Node, do that until we pop node that hasn't been visited yet.
+            try {
+                do {
+                    currentAstarNode = open.remove();
+                } while (closed.contains(currentAstarNode.position()));
+            } catch (NoSuchElementException e) {
+                throw new NoSuchElementException("No path from: " + current + " to: " + target);
             }
         }
-        throw new IllegalStateException("No path from " + current + " to " + target);
+        // the next Node is target start backtracking and return first move
+        return firstAction(currentAstarNode);
     }
 
-    // Heuristic: never overestimates, since each move changes x or y by 1
-    private static int manhattan(Position a, Position b) {
+    // Heuristic; is the h(n).
+    private int manhattan(Position a, Position b) {
         return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y());
     }
 
-    // The 4 adjacent cells, without negative coordinates (outside the world)
-    private static List<Position> neighbours(Position p) {
+    // Gets the 4 adjacent cells, filters out blocked ones
+    private List<Position> getNeighbours(Position p, Map<Position, Boolean> known) {
         List<Position> result = new ArrayList<>(4);
-        for (Position next : new Position[]{p.move(0, -1), p.move(1, 0), p.move(0, 1), p.move(-1, 0)}) {
-            if (next.x() >= 0 && next.y() >= 0) {
+        Position[] positions = new Position[]{p.move(0, -1),
+                p.move(1, 0),
+                p.move(0, 1),
+                p.move(-1, 0)};
+        for (Position next : positions) {
+            // Adds neighbour if not discovered state yet or if it's free
+            if (!known.containsKey(next) || !known.get(next)) {
                 result.add(next);
             }
         }
@@ -75,7 +76,7 @@ public class GridPolicy {
     }
 
     // Follows the parents back to the start and converts the first move into an action code
-    private static String firstAction(Node goal) {
+    private String firstAction(Node goal) {
         Node step = goal;
         while (step.parent().parent() != null) {
             step = step.parent();

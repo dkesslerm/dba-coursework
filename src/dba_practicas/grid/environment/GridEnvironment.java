@@ -30,11 +30,15 @@ public class GridEnvironment {
     private String energyMode;
     private double remainingEnergy;
 
+    // to change different maps in .env
+    private long challengeId = -1;
     // Loads the secrets and creates the client, no run is started yet
     public GridEnvironment() throws Exception {
         Properties secrets = new Properties();
         try (FileInputStream in = new FileInputStream(".env")) {
             secrets.load(in);
+            String id = secrets.getProperty("DBA_CHALLENGE_ID");
+            if (id != null) challengeId = Long.parseLong(id.trim());
         }
         client = new DBAClient(secrets.getProperty("DBA_LAB_URL"),
                                secrets.getProperty("DBA_TOKEN"));
@@ -49,8 +53,8 @@ public class GridEnvironment {
     // Separated from the constructor so that the agent already holds this object
     // and can close the run if one of the readings fails
     public void start() throws Exception {
-        long challengeId = client.findChallengeId(CHALLENGE_TYPE);
-        runId = client.startRun(challengeId);
+        long id = (challengeId != -1) ? challengeId : client.findChallengeId(CHALLENGE_TYPE);
+        runId = client.startRun(id);
         runActive = true;
 
         JsonObject tPosition = client.readSensor(runId, "grid.target");
