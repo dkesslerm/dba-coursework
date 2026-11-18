@@ -5,7 +5,7 @@ JADE agents that interact with **DBA Lab** (UGR) to solve the Practice 2 challen
 | Part | Goal | Status |
 | --- | --- | --- |
 | **Thermostat** | Keep a refrigerated chamber within its permitted temperature interval until DBA Lab reports the run as finished. | In development |
-| **Grid** | Reach a target in a 2D grid using cardinal moves, avoiding obstacles, with partial perception and limited energy. | Not started |
+| **Grid** | Reach a target in a 2D grid using cardinal moves, avoiding obstacles, with partial perception and limited energy. | In development |
 
 ## How it works
 
@@ -23,6 +23,17 @@ The cycle stops when DBA Lab reports that the run is no longer `ACTIVE`. The off
 src/dba_practicas/
 ├── common/
 │   └── DBAClient.java                # DBA Lab REST API client, shared by every challenge
+├── grid/
+│   ├── README.md                     # Notes on the grid design
+│   ├── agents/
+│   │   ├── GridAgent.java            # Agent: setup, wires environment and policy, run closing
+│   │   └── GridBehaviour.java        # Perception → decision → action cycle
+│   ├── environment/
+│   │   ├── GridEnvironment.java      # The run: connection, sensors, actuators, known map
+│   │   ├── Position.java             # x and y coordinates
+│   │   └── CellState.java            # FREE or BLOCKED, for the known map
+│   └── policy/
+│       └── GridPolicy.java           # A* over the known map
 └── thermostat/
     ├── agents/
     │   ├── ThermoAgent.java          # Agent: setup, wires environment and policy, run closing
@@ -104,6 +115,12 @@ java -cp "lib/jade.jar:lib/gson-2.11.0.jar:build/classes" jade.Boot \
      -agents thermo:dba_practicas.thermostat.agents.ThermoAgent
 ```
 
+To run the grid agent instead, replace the last line with:
+
+```bash
+     -agents grid:dba_practicas.grid.agents.GridAgent
+```
+
 ### Expected output
 
 Besides the raw responses that `DBAClient` logs (`Start response : ...`, `Sensor ... : ...`), the agent prints the run id, the limits and the target, then one line per step, and finally the official result:
@@ -112,6 +129,15 @@ Besides the raw responses that `DBAClient` logs (`Start response : ...`, `Sensor
 Run <runId> | limits [<lower>, <upper>] | target <target>
 temp <t> -> ON  | ACTIVE
 temp <t> -> OFF | ACTIVE
+...º
+End of run : <status> (reason : <reasonCode>)
+```
+
+The grid agent prints the target, then the position, energy and move of each step:
+
+```text
+Run <runId> | Target Position (<x>, <y>)
+Position: (<x>, <y>) | energy <e> -> EAST | ACTIVE
 ...
 End of run : <status> (reason : <reasonCode>)
 ```
