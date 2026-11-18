@@ -23,7 +23,7 @@ public class GridEnvironment {
     // State
     private Position currentPosition;
     private Position targetPos;
-    // Known map: every cell the bumpers have reported. 1 is blocked, 0 is open
+    // Known map: every cell the bumpers have reported. True is blocked, False is open
     private final Map<Position, Boolean> grid = new HashMap<>();
 
     // print in the beginning and then remainingEnergy after each move
@@ -44,16 +44,13 @@ public class GridEnvironment {
                                secrets.getProperty("DBA_TOKEN"));
     }
 
-    public GridEnvironment(DBAClient client) {
-        this.client = client;
-    }
-
     // Starts the run and reads the target, runs only once. The position, bumpers and
     // energy change at every step, so the behaviour reads them in each cycle (see).
     // Separated from the constructor so that the agent already holds this object
     // and can close the run if one of the readings fails
     public void start() throws Exception {
         long id = (challengeId != -1) ? challengeId : client.findChallengeId(CHALLENGE_TYPE);
+        System.out.println("Challenge " + id + " : " + client.findChallengeName(id) + "\n");
         runId = client.startRun(id);
         runActive = true;
 

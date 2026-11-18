@@ -76,7 +76,19 @@ public class DBAClient {
         }
         throw new Exception("No challenge of type " + environmentType);
     }
-
+    
+    // Finding the name of the challenge with the given id
+    public String findChallengeName(long challengeId) throws Exception {
+        JsonObject root = JsonParser.parseString(getChallenges()).getAsJsonObject();
+        for (JsonElement element : root.getAsJsonArray("challenges")) {
+            JsonObject challenge = element.getAsJsonObject();
+            if (challenge.get("id").getAsLong() == challengeId) {
+                return challenge.get("name").getAsString();
+            }
+        }
+        throw new Exception("No challenge with id " + challengeId);
+    }
+    
     // ===== Runs =====
 
     // Starting a run and returning its runId
